@@ -30,7 +30,7 @@ func orig(key string) (value string) {
 }
 ```
 > 有了lm，再写上面的代码时，一切变的那么简单
-[lm_test.go](http://github.com/simplejia/lm/lm_test.go)
+[lm_test.go](http://github.com/simplejia/lm/tree/master/lm_test.go)
 ```
 func tGlue(key, value string) (err error) {
 	err = Glue(
