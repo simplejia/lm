@@ -11,7 +11,6 @@ func orig(key string) (value string) {
     redis.Set(key, value)
     return
 }
-
 // 如果再加上lc的话
 func orig(key string) (value string) {
     value = lc.Get(key)
