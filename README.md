@@ -63,7 +63,7 @@ func tGlue(key, value string) (err error) {
 * 支持Glue[Lc|Mc]及相应批量操作Glues[Lc|Mc]，详见lm_test.go示例代码
 
 ## 注意
-* lm.LcStru.Safety，当置为true时，对lc在并发状态下返回的nil值不接受，因为lc.Get在并发状态下，同一个key返回的value有可能是nil，并且ok状态为true，Safety置为true后，对以上情况不接受，会继续调用下一层逻辑，
+* lm.LcStru.Safety，当置为true时，对lc在并发状态下返回的nil值不接受，因为lc.Get在并发状态下，同一个key返回的value有可能是nil，并且ok状态为true，Safety置为true后，对以上情况不接受，会继续调用下一层逻辑
 
 ## LICENSE
 lm is licensed under the Apache Licence, Version 2.0
