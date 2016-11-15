@@ -12,6 +12,15 @@ import (
 	"time"
 )
 
+type LmStru struct {
+	Input  interface{}
+	Output interface{}
+	Proc   ft
+	Key    mft
+	Mc     *McStru
+	Lc     *LcStru
+}
+
 type McStru struct {
 	Expire time.Duration
 	Pool   *redis.Pool
@@ -25,7 +34,8 @@ type LcStru struct {
 type ft func(p, r interface{}) error
 type mft func(p interface{}) string
 
-func GluesMc(ps interface{}, result interface{}, f ft, mf mft, stru *McStru) (err error) {
+func GluesMc(lmStru *LmStru) (err error) {
+	ps, result, f, mf, stru := lmStru.Input, lmStru.Output, lmStru.Proc, lmStru.Key, lmStru.Mc
 	expire, pool := stru.Expire, stru.Pool
 
 	rps := reflect.ValueOf(ps)
@@ -118,7 +128,8 @@ func GluesMc(ps interface{}, result interface{}, f ft, mf mft, stru *McStru) (er
 	return
 }
 
-func GlueMc(p interface{}, result interface{}, f ft, mf mft, stru *McStru) (err error) {
+func GlueMc(lmStru *LmStru) (err error) {
+	p, result, f, mf, stru := lmStru.Input, lmStru.Output, lmStru.Proc, lmStru.Key, lmStru.Mc
 	expire, pool := stru.Expire, stru.Pool
 
 	key4mc := mf(p)
@@ -149,7 +160,8 @@ func GlueMc(p interface{}, result interface{}, f ft, mf mft, stru *McStru) (err 
 	return
 }
 
-func GluesLc(ps interface{}, result interface{}, f ft, mf mft, stru *LcStru) (err error) {
+func GluesLc(lmStru *LmStru) (err error) {
+	ps, result, f, mf, stru := lmStru.Input, lmStru.Output, lmStru.Proc, lmStru.Key, lmStru.Lc
 	expire, safety := stru.Expire, stru.Safety
 
 	rps := reflect.ValueOf(ps)
@@ -234,7 +246,8 @@ func GluesLc(ps interface{}, result interface{}, f ft, mf mft, stru *LcStru) (er
 	return
 }
 
-func GlueLc(p interface{}, result interface{}, f ft, mf mft, stru *LcStru) (err error) {
+func GlueLc(lmStru *LmStru) (err error) {
+	p, result, f, mf, stru := lmStru.Input, lmStru.Output, lmStru.Proc, lmStru.Key, lmStru.Lc
 	expire, safety := stru.Expire, stru.Safety
 
 	rresult := reflect.Indirect(reflect.ValueOf(result))
@@ -265,38 +278,44 @@ func GlueLc(p interface{}, result interface{}, f ft, mf mft, stru *LcStru) (err 
 	return
 }
 
-func Glues(ps interface{}, result interface{}, f ft, mf mft, mcStru *McStru, lcStru *LcStru) (err error) {
-	return GluesLc(
-		ps,
-		result,
-		func(ps, result interface{}) error {
-			return GluesMc(
-				ps,
-				result,
-				f,
-				mf,
-				mcStru,
-			)
+func Glues(lmStru *LmStru) (err error) {
+	ps, result, f, mf, mcStru, lcStru := lmStru.Input, lmStru.Output, lmStru.Proc, lmStru.Key, lmStru.Mc, lmStru.Lc
+	lmStru = &LmStru{
+		Input:  ps,
+		Output: result,
+		Proc: func(ps, result interface{}) error {
+			lmStru := &LmStru{
+				Input:  ps,
+				Output: result,
+				Proc:   f,
+				Key:    mf,
+				Mc:     mcStru,
+			}
+			return GluesMc(lmStru)
 		},
-		mf,
-		lcStru,
-	)
+		Key: mf,
+		Lc:  lcStru,
+	}
+	return GluesLc(lmStru)
 }
 
-func Glue(p interface{}, result interface{}, f ft, mf mft, mcStru *McStru, lcStru *LcStru) (err error) {
-	return GlueLc(
-		p,
-		result,
-		func(p, result interface{}) error {
-			return GlueMc(
-				p,
-				result,
-				f,
-				mf,
-				mcStru,
-			)
+func Glue(lmStru *LmStru) (err error) {
+	p, result, f, mf, mcStru, lcStru := lmStru.Input, lmStru.Output, lmStru.Proc, lmStru.Key, lmStru.Mc, lmStru.Lc
+	lmStru = &LmStru{
+		Input:  p,
+		Output: result,
+		Proc: func(p, result interface{}) error {
+			lmStru := &LmStru{
+				Input:  p,
+				Output: result,
+				Proc:   f,
+				Key:    mf,
+				Mc:     mcStru,
+			}
+			return GluesMc(lmStru)
 		},
-		mf,
-		lcStru,
-	)
+		Key: mf,
+		Lc:  lcStru,
+	}
+	return GlueLc(lmStru)
 }

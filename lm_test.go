@@ -142,20 +142,21 @@ func tGluesLc() {
 	ids := []uint64{1, 2, 33}
 	r := map[uint64]*s1{}
 
-	err := GluesLc(
-		ids,
-		&r,
-		func(ps, result interface{}) error {
+	lmStru := &LmStru{
+		Input:  ids,
+		Output: &r,
+		Proc: func(ps, result interface{}) error {
 			return f1(ps.([]uint64), result.(*map[uint64]*s1))
 		},
-		func(p interface{}) string {
+		Key: func(p interface{}) string {
 			return mf1("GluesLc", p.(uint64))
 		},
-		&LcStru{
+		Lc: &LcStru{
 			Expire: time.Second,
 			Safety: false,
 		},
-	)
+	}
+	err := GluesLc(lmStru)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -168,20 +169,21 @@ func tGlueLc() {
 	id := uint64(33)
 	var r *s1
 
-	err := GlueLc(
-		id,
-		&r,
-		func(p, r interface{}) error {
+	lmStru := &LmStru{
+		Input:  id,
+		Output: &r,
+		Proc: func(p, r interface{}) error {
 			return f3(p.(uint64), r.(**s1))
 		},
-		func(p interface{}) string {
+		Key: func(p interface{}) string {
 			return mf1("GlueLc", p.(uint64))
 		},
-		&LcStru{
+		Lc: &LcStru{
 			Expire: time.Second,
 			Safety: false,
 		},
-	)
+	}
+	err := GlueLc(lmStru)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -195,20 +197,21 @@ func tGlueFlatLc() {
 	rid := uint64(44)
 	var r []*s1
 
-	err := GlueLc(
-		[]interface{}{id, rid},
-		&r,
-		func(p, r interface{}) error {
+	lmStru := &LmStru{
+		Input:  []interface{}{id, rid},
+		Output: &r,
+		Proc: func(p, r interface{}) error {
 			return f4(p.([]interface{})[0].(uint64), p.([]interface{})[1].(uint64), r.(*[]*s1))
 		},
-		func(p interface{}) string {
+		Key: func(p interface{}) string {
 			return mf2("GlueFlatLc", p.([]interface{})[0].(uint64), p.([]interface{})[1].(uint64))
 		},
-		&LcStru{
+		Lc: &LcStru{
 			Expire: time.Second,
 			Safety: false,
 		},
-	)
+	}
+	err := GlueLc(lmStru)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -221,20 +224,21 @@ func tGluesMc() {
 	ids := []uint64{1, 2, 33}
 	var r map[uint64]*s1
 
-	err := GluesMc(
-		ids,
-		&r,
-		func(ps, result interface{}) error {
+	lmStru := &LmStru{
+		Input:  ids,
+		Output: &r,
+		Proc: func(ps, result interface{}) error {
 			return f1(ps.([]uint64), result.(*map[uint64]*s1))
 		},
-		func(p interface{}) string {
+		Key: func(p interface{}) string {
 			return mf1("GluesMc", p.(uint64))
 		},
-		&McStru{
+		Mc: &McStru{
 			Expire: time.Second,
 			Pool:   pool,
 		},
-	)
+	}
+	err := GluesMc(lmStru)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -247,20 +251,21 @@ func tGlueMc() {
 	id := uint64(33)
 	var r *s1
 
-	err := GlueMc(
-		id,
-		&r,
-		func(p, r interface{}) error {
+	lmStru := &LmStru{
+		Input:  id,
+		Output: &r,
+		Proc: func(p, r interface{}) error {
 			return f3(p.(uint64), r.(**s1))
 		},
-		func(p interface{}) string {
+		Key: func(p interface{}) string {
 			return mf1("GlueMc", p.(uint64))
 		},
-		&McStru{
+		Mc: &McStru{
 			Expire: time.Second,
 			Pool:   pool,
 		},
-	)
+	}
+	err := GlueMc(lmStru)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -274,20 +279,21 @@ func tGlueFlatMc() {
 	rid := uint64(44)
 	var r []*s1
 
-	err := GlueMc(
-		[]interface{}{id, rid},
-		&r,
-		func(p, r interface{}) error {
+	lmStru := &LmStru{
+		Input:  []interface{}{id, rid},
+		Output: &r,
+		Proc: func(p, r interface{}) error {
 			return f4(p.([]interface{})[0].(uint64), p.([]interface{})[1].(uint64), r.(*[]*s1))
 		},
-		func(p interface{}) string {
+		Key: func(p interface{}) string {
 			return mf2("GlueFlatMc", p.([]interface{})[0].(uint64), p.([]interface{})[1].(uint64))
 		},
-		&McStru{
+		Mc: &McStru{
 			Expire: time.Second,
 			Pool:   pool,
 		},
-	)
+	}
+	err := GlueMc(lmStru)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -300,24 +306,25 @@ func tGlues() {
 	ids := []uint64{1, 2, 33}
 	var r map[uint64]*s1
 
-	err := Glues(
-		ids,
-		&r,
-		func(ps, r interface{}) error {
+	lmStru := &LmStru{
+		Input:  ids,
+		Output: &r,
+		Proc: func(ps, r interface{}) error {
 			return f1(ps.([]uint64), r.(*map[uint64]*s1))
 		},
-		func(p interface{}) string {
+		Key: func(p interface{}) string {
 			return mf1("Glues", p.(uint64))
 		},
-		&McStru{
+		Mc: &McStru{
 			Expire: time.Second * 2,
 			Pool:   pool,
 		},
-		&LcStru{
+		Lc: &LcStru{
 			Expire: time.Second,
 			Safety: false,
 		},
-	)
+	}
+	err := Glues(lmStru)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -330,24 +337,25 @@ func tGlue() {
 	id := uint64(33)
 	var r *s1
 
-	err := Glue(
-		id,
-		&r,
-		func(p, r interface{}) error {
+	lmStru := &LmStru{
+		Input:  id,
+		Output: &r,
+		Proc: func(p, r interface{}) error {
 			return f3(p.(uint64), r.(**s1))
 		},
-		func(p interface{}) string {
+		Key: func(p interface{}) string {
 			return mf1("Glue", p.(uint64))
 		},
-		&McStru{
+		Mc: &McStru{
 			Expire: time.Second * 2,
 			Pool:   pool,
 		},
-		&LcStru{
+		Lc: &LcStru{
 			Expire: time.Second,
 			Safety: false,
 		},
-	)
+	}
+	err := Glue(lmStru)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -361,24 +369,25 @@ func tGlueFlat() {
 	rid := uint64(66)
 	var r []*s1
 
-	err := Glue(
-		[]interface{}{id, rid},
-		&r,
-		func(p, r interface{}) error {
+	lmStru := &LmStru{
+		Input:  []interface{}{id, rid},
+		Output: &r,
+		Proc: func(p, r interface{}) error {
 			return f4(p.([]interface{})[0].(uint64), p.([]interface{})[1].(uint64), r.(*[]*s1))
 		},
-		func(p interface{}) string {
+		Key: func(p interface{}) string {
 			return mf2("GlueFlat", p.([]interface{})[0].(uint64), p.([]interface{})[1].(uint64))
 		},
-		&McStru{
+		Mc: &McStru{
 			Expire: time.Second * 2,
 			Pool:   pool,
 		},
-		&LcStru{
+		Lc: &LcStru{
 			Expire: time.Second,
 			Safety: false,
 		},
-	)
+	}
+	err := Glue(lmStru)
 	if err != nil {
 		fmt.Println(err)
 		return

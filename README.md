@@ -32,26 +32,27 @@ func orig(key string) (value string) {
 [lm_test.go](http://github.com/simplejia/lm/tree/master/lm_test.go)
 ```
 func tGlue(key, value string) (err error) {
-	err = Glue(
-		key,
-		&value,
-		func(p, r interface{}) error {
+	lmStru := &LmStru{
+		Input:  key,
+		Output: &value,
+        Proc: func(p, r interface{}) error {
             _r := r.(*string)
             *_r = "test value"
 			return nil
 		},
-		func(p interface{}) string {
+        Key: func(p interface{}) string {
 			return fmt.Sprintf("tGlue:%v", p)
 		},
-		&LcStru{
+		Mc: &McStru{
+			Expire: time.Minute,
+			Pool:   pool,
+		},
+		Lc: &LcStru{
 			Expire: time.Millisecond * 500,
 			Safety: false,
 		},
-		&McStru{
-			Expire: time.Minute,
-            Pool: pool,
-		},
-	)
+	}
+	err := Glue(lmStru)
 	if err != nil {
 		return
 	}
