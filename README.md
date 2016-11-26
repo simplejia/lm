@@ -1,3 +1,78 @@
+[中文 README](#中文)
+
+
+# [lm](http://github.com/simplejia/lm) (lc+redis+[mysql|http] glue)
+## Original Intention
+> When coding with redis and mysql(maybe also add lc cache support), as following:
+```
+func orig(key string) (value string) {
+    value = redis.Get(key)
+    if value != "" {
+        return
+    }
+    value = mysql.Get(key)
+    redis.Set(key, value)
+    return
+}
+// add lc cache support
+func orig(key string) (value string) {
+    value = lc.Get(key)
+    if value != "" {
+        return
+    }
+    value = redis.Get(key)
+    if value != "" {
+        lc.Set(key, value)
+        return
+    }
+    value = mysql.Get(key)
+    redis.Set(key, value)
+    lc.Set(key, value)
+    return
+}
+```
+> Having lm, the code above will be very easy:
+[lm_test.go](http://github.com/simplejia/lm/tree/master/lm_test.go)
+```
+func tGlue(key, value string) (err error) {
+	lmStru := &LmStru{
+		Input:  key,
+		Output: &value,
+        Proc: func(p, r interface{}) error {
+            _r := r.(*string)
+            *_r = "test value"
+			return nil
+		},
+        Key: func(p interface{}) string {
+			return fmt.Sprintf("tGlue:%v", p)
+		},
+		Mc: &McStru{
+			Expire: time.Minute,
+			Pool:   pool,
+		},
+		Lc: &LcStru{
+			Expire: time.Millisecond * 500,
+			Safety: false,
+		},
+	}
+	err := Glue(lmStru)
+	if err != nil {
+		return
+	}
+    return
+}
+```
+## Features
+* It can automatically add cache feature and support lc and redis, which will make your code more simpler and reliable and reduce large segment of redundant code.
+* It supports Glue[Lc|Mc] and corresponding batch operation(Glues[Lc|Mc]), for the details, please refer to the instance code of lm_test.go
+
+## Notice
+* lm.LcStru.Safety parameter，When it is true, the nil value returned by the LC under concurrent state is not accepted, because when lc.Get is under concurrent state, the returned value by the same key maybe nil but ok parameter is true. When safety is set as true, all the conditions above will not be accepted. It will continue the next logic.
+
+---
+中文
+===
+
 # [lm](http://github.com/simplejia/lm) (lc+redis+[mysql|http] glue)
 ## 实现初衷
 > 写redis+mysql代码时（还可能加上lc），示意代码如下：
