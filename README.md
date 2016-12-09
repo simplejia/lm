@@ -55,7 +55,7 @@ func tGlue(key, value string) (err error) {
 			Safety: false,
 		},
 	}
-	err := Glue(lmStru)
+	err = Glue(lmStru)
 	if err != nil {
 		return
 	}
@@ -127,7 +127,7 @@ func tGlue(key, value string) (err error) {
 			Safety: false,
 		},
 	}
-	err := Glue(lmStru)
+	err = Glue(lmStru)
 	if err != nil {
 		return
 	}
@@ -140,3 +140,32 @@ func tGlue(key, value string) (err error) {
 
 ## 注意
 * lm.LcStru.Safety，当置为true时，对lc在并发状态下返回的nil值不接受，因为lc.Get在并发状态下，同一个key返回的value有可能是nil，并且ok状态为true，Safety置为true后，对以上情况不接受，会继续调用下一层逻辑
+
+## 案例分享
+* 一天一个用户只容许投一次票
+```
+func f(uid string) (err error) {
+	lmStru := &lm.LmStru{
+		Input: uid,
+		Output: &struct{}{},
+        Proc: func(p, r interface{}) error {
+			// 略掉这部分逻辑: 可以把投票入库
+			// ...
+			return nil
+		},
+        Key: func(p interface{}) string {
+			return fmt.Sprintf("pkg:f:%v", p)
+		},
+		Mc: &lm.McStru{
+			Expire: time.Hour * 24,
+			Pool:   pool,
+		},
+	}
+	err = lm.GlueMc(lmStru)
+	if err != nil {
+		return
+	}
+    return
+}
+```
+
