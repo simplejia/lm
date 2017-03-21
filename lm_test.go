@@ -15,7 +15,7 @@ var pool *redis.Pool
 func init() {
 	pool = &redis.Pool{
 		Dial: func() (c redis.Conn, err error) {
-			c, err = redis.Dial("tcp", ":40003")
+			c, err = redis.Dial("tcp", ":6379")
 			if err != nil {
 				return
 			}
@@ -28,23 +28,6 @@ func init() {
 
 type s1 struct {
 	A int
-}
-
-func f0(ids []uint64, r *map[uint64]s1) (err error) {
-	m := map[uint64]s1{
-		33: s1{
-			A: 9,
-		},
-		34: s1{
-			A: 10,
-		},
-	}
-	for _, id := range ids {
-		if d, ok := m[id]; ok {
-			(*r)[id] = d
-		}
-	}
-	return
 }
 
 func f1(ids []uint64, r *map[uint64]*s1) (err error) {
@@ -111,23 +94,6 @@ func f4(id, rid uint64, r *[]*s1) (err error) {
 	return
 }
 
-func f5(id, rid uint64, r *[]s1) (err error) {
-	m := map[string][]s1{
-		"33_44": []s1{
-			s1{
-				A: 9,
-			},
-			s1{
-				A: 10,
-			},
-		},
-	}
-	if v, ok := m[fmt.Sprintf("%v_%v", id, rid)]; ok {
-		*r = v
-	}
-	return
-}
-
 func mf1(kind string, id uint64) (ret string) {
 	ret = "lm_" + kind + strconv.FormatUint(id, 10)
 	return
@@ -140,7 +106,7 @@ func mf2(kind string, id, rid uint64) (ret string) {
 
 func tGluesLc() {
 	ids := []uint64{1, 2, 33}
-	r := map[uint64]*s1{}
+	var r map[uint64]*s1
 
 	lmStru := &LmStru{
 		Input:  ids,
@@ -398,45 +364,36 @@ func tGlueFlat() {
 
 func ExampleGlueLc() {
 	tGlueLc()
-	return
 }
 
 func ExampleGlueFlatLc() {
 	tGlueFlatLc()
-	return
 }
 
 func ExampleGluesLc() {
 	tGluesLc()
-	return
 }
 
 func ExampleGlueMc() {
 	tGlueMc()
-	return
 }
 
 func ExampleGlueFlatMc() {
 	tGlueFlatMc()
-	return
 }
 
 func ExampleGluesMc() {
 	tGluesMc()
-	return
 }
 
 func ExampleGlue() {
 	tGlue()
-	return
 }
 
 func ExampleGlueFlat() {
 	tGlueFlat()
-	return
 }
 
 func ExampleGlues() {
 	tGlues()
-	return
 }

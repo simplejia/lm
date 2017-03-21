@@ -79,10 +79,7 @@ func GluesMc(lmStru *LmStru) (err error) {
 				pvNew = rppv.Interface()
 				rppv = reflect.Indirect(rppv)
 			}
-			if errIgnore := json.Unmarshal([]byte(v), &pvNew); errIgnore != nil {
-				// no expected here
-				continue
-			}
+			json.Unmarshal([]byte(v), &pvNew)
 			if pvNew == nil {
 				continue
 			}
@@ -111,18 +108,14 @@ func GluesMc(lmStru *LmStru) (err error) {
 		pNone := rpNone.Interface()
 		key4mc := mf(pNone)
 		expire4mc := int(expire / time.Second)
-		if rresultNone.IsValid() {
-			rv := rresultNone.MapIndex(rpNone)
-			if rv.IsValid() {
-				rresult.SetMapIndex(rpNone, rv)
-				v, errIgnore := json.Marshal(rv.Interface())
-				if errIgnore == nil { // errIgnore is not expected here
-					conn.Do("SETEX", key4mc, expire4mc, v)
-					continue
-				}
-			}
+		rv := rresultNone.MapIndex(rpNone)
+		if rv.IsValid() {
+			rresult.SetMapIndex(rpNone, rv)
+			v, _ := json.Marshal(rv.Interface())
+			conn.Do("SETEX", key4mc, expire4mc, v)
+		} else {
+			conn.Do("SETEX", key4mc, expire4mc, "null")
 		}
-		conn.Do("SETEX", key4mc, expire4mc, "null")
 	}
 
 	return
@@ -139,9 +132,7 @@ func GlueMc(lmStru *LmStru) (err error) {
 	defer conn.Close()
 	v, errIgnore := redis.String(conn.Do("GET", key4mc))
 	if errIgnore == nil {
-		if errIgnore := json.Unmarshal([]byte(v), &result); errIgnore != nil {
-			// no expected here
-		}
+		json.Unmarshal([]byte(v), &result)
 		return
 	} else if errIgnore != redis.ErrNil {
 		err = errIgnore
@@ -153,10 +144,8 @@ func GlueMc(lmStru *LmStru) (err error) {
 		return
 	}
 
-	vs, errIgnore := json.Marshal(result)
-	if errIgnore == nil { // errIgnore is not expected here
-		conn.Do("SETEX", key4mc, expire4mc, vs)
-	}
+	vs, _ := json.Marshal(result)
+	conn.Do("SETEX", key4mc, expire4mc, vs)
 	return
 }
 
@@ -228,6 +217,7 @@ func GluesLc(lmStru *LmStru) (err error) {
 			p := keysM[k]
 			rresult.SetMapIndex(reflect.ValueOf(p), reflect.ValueOf(v))
 		}
+		return
 	}
 
 	for i := 0; i < rpsNone.Len(); i++ {
@@ -238,9 +228,9 @@ func GluesLc(lmStru *LmStru) (err error) {
 		if rv.IsValid() {
 			rresult.SetMapIndex(rpNone, rv)
 			lc.Set(key, rv.Interface(), expire)
-			continue
+		} else {
+			lc.Set(key, nil, expire)
 		}
-		lc.Set(key, nil, expire)
 	}
 
 	return
@@ -312,7 +302,7 @@ func Glue(lmStru *LmStru) (err error) {
 				Key:    mf,
 				Mc:     mcStru,
 			}
-			return GluesMc(lmStru)
+			return GlueMc(lmStru)
 		},
 		Key: mf,
 		Lc:  lcStru,
