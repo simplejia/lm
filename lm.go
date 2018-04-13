@@ -3,6 +3,7 @@
 package lm
 
 import (
+	"bytes"
 	"encoding/json"
 
 	"github.com/garyburd/redigo/redis"
@@ -24,6 +25,7 @@ type LmStru struct {
 type McStru struct {
 	Expire time.Duration
 	Pool   *redis.Pool
+	Safety bool // true: nil值不保存
 }
 
 type LcStru struct {
@@ -36,7 +38,7 @@ type mft func(p interface{}) string
 
 func GluesMc(lmStru *LmStru) (err error) {
 	ps, result, f, mf, stru := lmStru.Input, lmStru.Output, lmStru.Proc, lmStru.Key, lmStru.Mc
-	expire, pool := stru.Expire, stru.Pool
+	expire, pool, safety := stru.Expire, stru.Pool, stru.Safety
 
 	rps := reflect.ValueOf(ps)
 	num := rps.Len()
@@ -111,9 +113,12 @@ func GluesMc(lmStru *LmStru) (err error) {
 		rv := rresultNone.MapIndex(rpNone)
 		if rv.IsValid() {
 			rresult.SetMapIndex(rpNone, rv)
-			v, _ := json.Marshal(rv.Interface())
+			v, errIgnore := json.Marshal(rv.Interface())
+			if errIgnore != nil {
+				continue
+			}
 			conn.Do("SETEX", key4mc, expire4mc, v)
-		} else {
+		} else if !safety {
 			conn.Do("SETEX", key4mc, expire4mc, "null")
 		}
 	}
@@ -123,7 +128,7 @@ func GluesMc(lmStru *LmStru) (err error) {
 
 func GlueMc(lmStru *LmStru) (err error) {
 	p, result, f, mf, stru := lmStru.Input, lmStru.Output, lmStru.Proc, lmStru.Key, lmStru.Mc
-	expire, pool := stru.Expire, stru.Pool
+	expire, pool, safety := stru.Expire, stru.Pool, stru.Safety
 
 	key4mc := mf(p)
 	expire4mc := int(expire / time.Second)
@@ -132,7 +137,7 @@ func GlueMc(lmStru *LmStru) (err error) {
 	defer conn.Close()
 	v, errIgnore := redis.String(conn.Do("GET", key4mc))
 	if errIgnore == nil {
-		json.Unmarshal([]byte(v), &result)
+		err = json.Unmarshal([]byte(v), &result)
 		return
 	} else if errIgnore != redis.ErrNil {
 		err = errIgnore
@@ -144,8 +149,20 @@ func GlueMc(lmStru *LmStru) (err error) {
 		return
 	}
 
-	vs, _ := json.Marshal(result)
-	conn.Do("SETEX", key4mc, expire4mc, vs)
+	vs, err := json.Marshal(result)
+	if err != nil {
+		return
+	}
+
+	if safety && bytes.Compare(vs, []byte("null")) == 0 {
+		return
+	}
+
+	_, err = conn.Do("SETEX", key4mc, expire4mc, vs)
+	if err != nil {
+		return
+	}
+
 	return
 }
 
@@ -196,7 +213,7 @@ func GluesLc(lmStru *LmStru) (err error) {
 		rp := rps.Index(i)
 		p := rp.Interface()
 		key := mf(p)
-		if _, ok := vsLc[key]; !ok {
+		if _, ok := vsAlterLc[key]; ok {
 			rpsNone = reflect.Append(rpsNone, rp)
 		}
 	}
