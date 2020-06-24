@@ -196,6 +196,7 @@ func GluesLc(lmStru *LmStru) (err error) {
 		if v == nil {
 			if safety {
 				delete(vsLc, k)
+				vsAlterLc[k] = nil
 			}
 			continue
 		}
